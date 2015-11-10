@@ -41,10 +41,8 @@
 	mysqli_query($link, $sql) or die(mysqli_error($enllac));
 
 	// Load local data
-	/*
 	$sql = "LOAD DATA LOCAL INFILE '".$load_file."' INTO TABLE `".$table_name."`
 	FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\r' IGNORE 1 LINES;";
 	mysqli_query($link, $sql) or die(mysqli_error($enllac));
-	*/
 
 ?>
