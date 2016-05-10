@@ -1,0 +1,119 @@
+<?php
+	/*
+	Load local file into the database table.
+	Please define the table cloumn in CREATE TABLE section.
+
+	There are two ways to load the data into MySQL database.
+	1) INSERT
+	2) LOAD DATA LOCAL INFILE
+
+	Method 2) is much easier than 1), however, the column order
+	must be same as the one in the local file.
+	Therefore, if the data structure is concreted, you can
+	choose 2), in case there could be a change, you shold take
+	method 1) method.
+
+	*/
+
+
+	// Parameter set
+	$database_name = "";
+	$table_name = "";
+	$load_file = "/var/share/hoge.csv";
+	$user = "";
+	$pass = "";
+	$server = "";
+
+	// Database connection
+	$link = mysqli_init();
+	mysqli_options($link, MYSQLI_OPT_LOCAL_INFILE, true);
+	mysqli_real_connect($link, $server, $user, $pass, $database_name);
+
+
+	// Method 1)
+
+	// SQL assembling
+
+	$sql_initial = "INSERT INTO ".$table_name." ";
+	$sql_columns = // "(col01, col02, col03, col04, col05, .....) ";
+	$sql_values = "VALUES ";
+
+	$openfile = file_get_contents($load_file);
+	$line_array = split("\n", $openfile); // line separater definition
+	$num_of_lines = count($line_array);
+	$max_num_of_fields = 0; // initial set
+
+	foreach($line_array as $line_index => $line_content){
+		//printf("%d: %s\n", $line_index, $line_content);
+
+		if($line_index == 0){
+			// ignore the first line, it's most likely header.
+		}
+
+		else{
+			// $field_array = preg_split("/[\s]+/", $line_content); // space separation
+			// $field_array = preg_split("\t", $line_content); // tab separation
+			// $field_array = preg_split("/[,]/", $line_content); // commna separation
+			$field_array = str_getcsv($line_content); // for csv file, works v.5.3 and later.
+
+			// If you need to check the column numbers.
+			// if($max_num_of_fields < count($field_array)){
+			//	$max_num_of_fields = count($field_array);
+			// }
+			//
+
+			foreach($field_array as $field_index => $field_content){
+				if($field_index == 0){
+					//printf("(`%s`,", $field_content);
+					$sql_values = $sql_values."(`".$field_content."`,";
+				}	
+				elseif($field_index == count($field_array)-1){
+					//printf("`%s`),\n", $field_content);
+					$sql_values = $sql_values."`".$field_content."`),";
+				}
+				else{
+					//printf("`%s`,", $field_content);
+					$sql_values = $sql_values."`".$field_content."`,";
+				}
+			}
+		}
+	}
+
+	$sql = $sql_initial.$sql_columns.$sql_values;
+	
+	mysqli_query($link, $sql) or die(mysql_error($link));
+
+
+
+
+
+
+	// Method 2)
+
+	// Table drop
+	$sql = "DROP TABLE IF EXISTS `".$table_name."`;";
+	mysqli_query($link, $sql) or die(mysqli_error($enllac));
+
+	// Table create
+	// Make sure the column order is exactly same as the load file.
+	$sql = "CREATE TABLE `".$table_name."` (
+	  `col01` varchar(45) DEFAULT NULL,
+	  `col02` datetime NOT NULL,
+	  `col03` varchar(45) DEFAULT NULL,
+	  `col04` int(11) DEFAULT NULL,
+	  `col05` int(11) DEFAULT NULL
+	) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
+	mysqli_query($link, $sql) or die(mysqli_error($enllac));
+
+	$sql = "LOAD DATA LOCAL INFILE '".$load_file."' INTO TABLE `".$table_name."`
+	FIELDS ENCLOSED BY '\"' TERMINATED BY ',' LINES TERMINATED BY '\r\n' IGNORE 1 LINES;";
+	mysqli_query($link, $sql) or die(mysqli_error($enllac));
+
+
+	// Output the load timestamp.
+
+	//$file = "<directory>/loadtimestamp.txt";
+	//file_put_contents($file, date('c'));
+
+
+?>
